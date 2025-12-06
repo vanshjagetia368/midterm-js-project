@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speech to Text Pad</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 30px; background: #f7f7f7; }
+        h1 { text-align: center; }
+        .controls { margin: 20px 0; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
+        button, .copy-btn, .delete-btn {
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+            cursor: pointer;
+        }
+        button {
+            padding: 10px 20px;
+            background: #007bff;
+            font-size: 16px;
+        }
+        button.stop, .delete-btn { background: #dc3545; }
+        button.clear { background: #6c757d; }
+        .copy-btn {
+            padding: 6px 12px;
+            background: #28a745;
+            margin-right: 10px;
+        }
+        .delete-btn {
+            padding: 6px 12px;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            font-size: 16px;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+        #notesSection { margin-top: 30px; }
+        .note {
+            background: #fff;
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #007bff;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        small {
+            margin-top: 5px;
+            color: #555;
+            display: block;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Speech to Text Pad</h1>
+    <div class="controls">
+        <button id="listenBtn">Start Listening</button>
+        <button id="stopBtn" class="stop">Stop Listening</button>
+        <button id="saveNote">Save Note</button>
+        <button id="clearText" class="clear">Clear Text</button>
+    </div>
+    <textarea id="textArea" placeholder="Your speech will appear here..."></textarea>
+    <h2>Saved Notes</h2>
+    <div id="notesSection"></div>
+
+    <script>
+        (function() {
+           const listenButton = document.getElementById("listenBtn");
+            const stopButton = document.getElementById("stopBtn");
+            const saveButton = document.getElementById("saveNote");
+            const clearButton = document.getElementById("clearText");
+            const textArea = document.getElementById("textArea");
+            const notesSection = document.getElementById("notesSection");
+            window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.addEventListener('result', (event) => {
+                let allTranscript = Array.from(event.results)
+                    .map(result => result[0].transcript)
+                    .join('');
+                textArea.value = allTranscript;
+            });
+            listenButton.addEventListener("click", () => { recognition.start(); });
+            stopButton.addEventListener("click", () => { recognition.stop(); });
+                saveButton.addEventListener("click", () => {
+                let content = textArea.value.trim();
+                if (!content) return;
+                const noteContainer = document.createElement("div");
+                noteContainer.classList.add("note");
+                const contentWrap = document.createElement("div");
+                const noteContent = document.createElement("div");
+                noteContent.textContent = content;
+                const noteTime = document.createElement("small");
+                const now = new Date();
+                noteTime.textContent = now.toLocaleDateString() + " \u2022 " + now.toLocaleTimeString();
+                contentWrap.appendChild(noteContent);
+                contentWrap.appendChild(noteTime);
+                noteContainer.appendChild(contentWrap);
+                const btnContainer = document.createElement("div");
+                const copyButton = document.createElement("button");
+                copyButton.classList.add("copy-btn");
+                copyButton.textContent = "Copy";
+                const deleteButton = document.createElement("button");
+                deleteButton.classList.add("delete-btn");
+                deleteButton.textContent = "Delete";
+                copyButton.addEventListener("click", () => {
+                    navigator.clipboard.writeText(content);
+                    copyButton.textContent = "Copied!";
+                    setTimeout(() => { copyButton.textContent = "Copy"; }, 1500);
+                });
+                deleteButton.addEventListener("click", () => {
+                    noteContainer.remove();
+                });
+                btnContainer.appendChild(copyButton);
+                btnContainer.appendChild(deleteButton);
+                noteContainer.appendChild(btnContainer);
+                notesSection.insertBefore(noteContainer,notesSection.firstChild);
+                textArea.value = "";
+            });
+                clearButton.addEventListener("click", () => {
+                textArea.value = "";
+            });
+        })();
+    </script>
+</body>
+</html>
